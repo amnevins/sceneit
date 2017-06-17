@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, View, TextInput } from 'react-native';
 import { FormLabel, FormInput, Button } from 'react-native-elements';
 import config from './config.js';
+export let theUserToken = '';
 
 import {
     AuthenticationDetails,
@@ -14,9 +15,7 @@ export class Login extends React.Component {
     constructor(props) {
         super(props);
         const { params } = this.props.navigation.state;
-        console.log('prooopppss login', this.props);
 
-        console.log('prooopppss login AGAIN', params.updateUserToken);
         this.loading = false;
         this.state = {
             username: '',
@@ -58,7 +57,7 @@ export class Login extends React.Component {
         try {
             const userToken = await this.login(this.state.username, this.state.password);
             console.log('a user token for loggin in', userToken);
-            this.props.updateUserToken(userToken);
+            theUserToken = userToken;
             this.props.navigation.navigate('Home');
         }
         catch(e) {

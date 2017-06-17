@@ -21,6 +21,9 @@
   "dependencies": {
     "expo": "^17.0.0",
     "react": "16.0.0-alpha.6",
-    "react-native": "^0.44.0"
+    "react-native": "^0.44.0",
+    "redux": "3.7.0",
+    "react-redux": "5.0.5",
+    "aws-sdk": "aws-sdk@git://github.com/aws/aws-sdk-js.git#react-native"
   }
 }

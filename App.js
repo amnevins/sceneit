@@ -4,7 +4,8 @@ import { Button, List, ListItem, SearchBar, Card, SwipeDeck } from 'react-native
 import { StackNavigator } from 'react-navigation';
 import { Login } from './login';
 import { Signup } from './signup';
-
+import { theUserToken } from './login';
+import { invokeApig, s3Upload } from './lib/awsLib';
 
 import themoviedb from 'themoviedb-javascript-library';
 themoviedb.common.api_key = "0d4e5741aa0f8d374c2c43a8006878e8";
@@ -24,25 +25,16 @@ class HomeScreen extends React.Component {
         };
     }
 
-    updateUserToken(userToken){
-        console.log('called that shit');
-        this.setState({
-            userToken: userToken
-        });
-    }
-
     render() {
         return (
             <View>
-                {!this.props.userToken ?
+                {!theUserToken ?
                     <View>
                         <Button
                             raised
                             icon={{name: 'home', size: 32}}
                             buttonStyle={{backgroundColor: 'red', borderRadius: 10, margin: 10}}
-                            onPress={() => this.props.navigation.navigate('Login', {
-                                updateUserToken: this.updateUserToken.bind(this)
-                            })}
+                            onPress={() => this.props.navigation.navigate('Login')}
                             textStyle={{textAlign: 'center'}}
                             title={`Login`}
                         />
@@ -50,9 +42,7 @@ class HomeScreen extends React.Component {
                             raised
                             icon={{name: 'home', size: 32}}
                             buttonStyle={{backgroundColor: 'red', borderRadius: 10, margin: 10}}
-                            onPress={() => this.props.navigation.navigate('Signup', {
-                                updateUserToken: this.updateUserToken
-                            })}
+                            onPress={() => this.props.navigation.navigate('Signup')}
                             textStyle={{textAlign: 'center'}}
                             title={`Signup`}
                         />
@@ -92,6 +82,7 @@ class HomeScreen extends React.Component {
 
 const SCREEN_HEIGHT = 600;
 const SCREEN_WIDTH = 400;
+
 class Recommendations extends React.Component {
     constructor(props) {
         super(props);
@@ -327,6 +318,7 @@ class MoviesScreen extends React.Component {
 
 class MovieScreen extends React.Component {
     constructor(props) {
+        console.log('LOADING MOVIE SCREEN FOR A SINGLE MOVIE');
         super(props);
         this.state = {
             movie: {
@@ -340,8 +332,39 @@ class MovieScreen extends React.Component {
     static navigationOptions = {
         title: 'Movie'
     };
+
+    saveMovie = (movie) => {
+        var self = this;
+        console.log(movie);
+        return invokeApig({
+            path: `/movies/list`,
+            method: 'POST',
+            body: movie
+        }, theUserToken);
+    };
+
+    handleSubmit = async (event) => {
+        this.setState({ isLoading: true });
+        // #TODO: ADD SCHEMA FOR SAVE TO WATCH LIST HERE
+        const movie = {
+            movieId: this.state.movie.id.toString(),
+            recommendedId: theUserToken,
+            rating: '0'
+        };
+        try {
+            await this.saveMovie(movie);
+            // this.props.navigation.navigate('Home');
+            this.setState({ isLoading: false });
+        }
+        catch(e) {
+            alert(e);
+            this.setState({ isLoading: false });
+        }
+
+    }
+
     getMovie = () => {
-        var self = this
+        var self = this;
 
         themoviedb.search.getMovie({query: this.props.navigation.state.params.name},
             function (movie) {
@@ -380,7 +403,9 @@ class MovieScreen extends React.Component {
                             icon={{name: 'code'}}
                             backgroundColor='#03A9F4'
                             buttonStyle={{borderRadius: 0, marginLeft: 0, marginRight: 0, marginBottom: 0}}
-                            title='Save Movie'/>
+                            title='Save Movie'
+                            onPress={() => this.handleSubmit()}
+                        />
                         <Button
                             icon={{name: 'code'}}
                             backgroundColor='#03A9F4'
